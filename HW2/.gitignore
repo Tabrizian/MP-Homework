@@ -1,0 +1,4 @@
+*.hex
+*.obj
+*.workspace
+*.bdsbak
