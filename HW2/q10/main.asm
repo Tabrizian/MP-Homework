@@ -55,7 +55,7 @@ skip:
 ret
 
 Start:
-      ldi no_of_bytes, 0x06 ; No of bytes to sort
+      ldi no_of_bytes, 100 ; No of bytes to sort
       ldi count, 0
       mov temp, no_of_bytes
 
