@@ -45,8 +45,8 @@ Start:
       ldi r16, 0x7f
       ldi r17, 0xff
       ldi r18, 0x03
-      ldi r30, 0x02
-      clr r31
+      ldi zl, low(BCD_to_7_seg)
+      ldi zh, high(BCD_to_7_seg)
       lpm R16, Z
       out DDRA, r17
       out PORTA, r16
