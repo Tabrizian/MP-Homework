@@ -35,7 +35,7 @@
       ldi temp, 0
       out TCNT0, temp
 
-      sbi PORTB, PORTB3
+      sbi DDRB, DDB3
 
       rjmp  Start
 
