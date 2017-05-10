@@ -23,7 +23,7 @@
       ; Reset Vector
       ; Set prescalar to 1024
       ; Enable phase correct PWM
-      ldi timer, (1 << CS02) | (0 << CS01) | (1 << CS00) | (1 << WGM00) | (1 << WGM01) | (1 << COM00) | (1 << COM01)
+      ldi timer, (1 << CS02) | (0 << CS01) | (1 << CS00) | (1 << WGM00) | (0 << WGM01) | (1 << COM00) | (1 << COM01)
       out TCCR0, timer
 
       ; Initialize the timer counter
@@ -38,9 +38,13 @@
 
       clr temp
       ldi temp, (1 << DDD4) | (1 << DDD5)
+
       out DDRD, temp
       sbi PORTD, PORTD6
       sbi PORTD, PORTD7
+
+      ldi temp, 0x0E
+      out OCR0, temp
 
       rjmp  Start
 
@@ -48,22 +52,22 @@
 ; CODE SEGMENT
 ;====================================================================
 FrequencyHigh:
-      ldi temp, 64
+      ldi temp, 0x0F
       out OCR0, temp
       ret
 
 FrequencyLow:
-      ldi temp, 4
+      ldi temp, 0xA0
       out OCR0, temp
       ret
 
 CheckSW1:
-      sbic PIND, 7
+      sbis PIND, 7
       call FrequencyHigh
       ret
 
 CheckSW2:
-      sbic PIND, 6
+      sbis PIND, 6
       call FrequencyLow
       ret
 
