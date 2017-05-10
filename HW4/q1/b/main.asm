@@ -28,7 +28,7 @@
       out TCCR0, timer
 
       ; OCR0 initialization
-      ldi temp, 0x80
+      ldi temp, 0x01
       out OCR0, temp
 
       ; Initialize the timer counter
