@@ -81,12 +81,16 @@ BeginConversion:
       ret
 
 ADC1:
+
       in xl, ADMUX
       ldi xl, (1 << MUX0) | (0 << MUX1) | (0 << MUX2) | (0 << MUX3)
       out ADMUX, xl
       in xl, ADCSRA
       ori xl, (1 << ADSC)
       out ADCSRA, xl
+      in xh, MCUCR
+      ori xh, (1 << SM0)
+      out MCUCR, xh
 ADC1Wait:
 
       in xl, ADCSRA
@@ -101,6 +105,9 @@ ADC2:
       in xl, ADCSRA
       ori xl, (1 << ADSC)
       out ADCSRA, xl
+      in xh, MCUCR
+      ori xh, (1 << SM0)
+      out MCUCR, xh
 ADC2Wait:
 
       in xl, ADCSRA
@@ -115,6 +122,9 @@ ADC3:
       in xl, ADCSRA
       ori xl, (1 << ADSC)
       out ADCSRA, xl
+      in xh, MCUCR
+      ori xh, (1 << SM0)
+      out MCUCR, xh
 ADC3Wait:
 
       in xl, ADCSRA
