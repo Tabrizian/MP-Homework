@@ -91,6 +91,28 @@ By putting equal both of the equations we reach to the number $R1 = 5060 \Omega$
         $\frac{1}{7}$.
 
     \item
+        Because of heavy usage of this formula we calculate the general formual
+        so we can find the resistence for any given \textit{p \%} of humidity.
+
+        $$R_1=\frac{5*10^4}{0.6+0.034*p}-10^4$$
+
+        By substuting the given percents we reach to:
+
+        $$R_2 = 29062 \Omega$$
+
+        $$R_3 = 8939 \Omega$$
+
+    \item
+        The source code and simulation results can be both found in the attached
+        files.
+
+    \item
+        The best mode for putting ADC to sleep is ADC noise reduction mode.
+        you can enable this mode by simple putting SM2..0 bits equal to the
+        "001".
+
+
+
 
 
 \end{enumerate}
