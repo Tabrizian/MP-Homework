@@ -9,7 +9,15 @@
 ;====================================================================
 ; DEFINITIONS
 ;====================================================================
-.def temp=r16
+.def temp1=R20
+.def temp2=R21
+.def temp3=R22
+.def result=R23
+.def argument_local=R24
+.def temp4=R25
+
+jmp Begin
+.include "lcd.asm"
 ;====================================================================
 ; VARIABLES
 ;====================================================================
@@ -18,33 +26,186 @@
 ; RESET and INTERRUPT VECTORS
 ;====================================================================
 
-      ; Reset Vector
-      ldi temp, 0x00
-      ldi temp, (1 << ACME)
-      out SFIOR, temp
+Begin:
+      ; Initial Configuration of the ADC
+      ldi temp1, 0x00
+      ldi temp1, (1 << ADEN)
+      out ADCSRA, temp1
 
-      ldi temp, 0x00
-      ldi temp, (1 << MUX0) | (0 << MUX1) | (0 << MUX2)
-      out ADMUX, temp
+      ldi temp1, 0x00
+      ldi temp1, (0 << ADTS2) | (0 << ADTS1) | (0 << ADTS0)
+      out SFIOR, temp1
 
-      ldi temp, 0x00
-      ldi temp, (1 << DDD5)
-      out DDRD, temp
+      in temp1, ADMUX
+      ori temp1, (1 << MUX0)
+      out ADMUX, temp1
+
+      ldi temp1, 0xFF
+      out DDRD, temp1
 
       rjmp  Start
 
 ;====================================================================
 ; CODE SEGMENT
 ;====================================================================
+SubtractWord:
+      sub temp1, argument_local
+      brsh WordPositive
+      ldi temp3, 0xFF
+      add temp1, temp3
+      subi temp2, 1
 
+WordPositive:
+      ret
+
+FindDigit:
+      ldi temp4, 0
+DigitLoop:
+      inc temp4
+      subi result, 10
+      brsh DigitLoop
+      ldi temp3, 10
+      add result, temp3
+      dec temp4
+      ret
+
+Convert:
+      ldi result, 0
+BeginConversion:
+
+      inc result
+      ldi argument_local, 0x07
+      rcall SubtractWord
+      brsh BeginConversion
+      dec result
+      ret
+
+ADC1:
+      in xl, ADMUX
+      ldi xl, (1 << MUX0) | (0 << MUX1) | (0 << MUX2) | (0 << MUX3)
+      out ADMUX, xl
+      in xl, ADCSRA
+      ori xl, (1 << ADSC)
+      out ADCSRA, xl
+ADC1Wait:
+
+      in xl, ADCSRA
+      sbrc xl, ADSC
+      rjmp ADC1Wait
+      ret
+
+ADC2:
+      in xl, ADMUX
+      ldi xl, (0 << MUX0) | (1 << MUX1) | (0 << MUX2) | (0 << MUX3)
+      out ADMUX, xl
+      in xl, ADCSRA
+      ori xl, (1 << ADSC)
+      out ADCSRA, xl
+ADC2Wait:
+
+      in xl, ADCSRA
+      sbrc xl, ADSC
+      rjmp ADC2Wait
+      ret
+
+ADC3:
+      in xl, ADMUX
+      ldi xl, (1 << MUX0) | (1 << MUX1) | (0 << MUX2) | (0 << MUX3)
+      out ADMUX, xl
+      in xl, ADCSRA
+      ori xl, (1 << ADSC)
+      out ADCSRA, xl
+ADC3Wait:
+
+      in xl, ADCSRA
+      sbrc xl, ADSC
+      rjmp ADC3Wait
+      ret
+
+turnoff:
+      cbi PORTD, PORTD4
+      ret
+turnon:
+      sbi PORTD, PORTD4
+      ret
 Start:
       ; Write your code here
-Loop:
-      sbis ACSR, ACO
-      sbi  PORTD, PORTD5
-      sbic ACSR, ACO
-      cbi  PORTD, PORTD5
-      rjmp  Loop
+
+MainLoop:
+      rcall LCD_init
+      rcall ADC1
+
+      in temp1, ADCL
+      in temp2, ADCH
+      cbr temp2, (0 << 7) | (0 << 6) | (0 << 5) | (0 << 4) | (0 << 3) | (0 << 2)
+
+      rcall ADC2
+      in temp3, ADCL
+      in temp4, ADCH
+      cbr temp4, (0 << 7) | (0 << 6) | (0 << 5) | (0 << 4) | (0 << 3) | (0 << 2)
+
+      cp temp2, temp4
+      breq equal
+      brsh higher
+      brlo lower
+equal:
+      cp temp1, temp3
+      brsh higher2
+      brlo lower2
+higher2:
+      rjmp higher
+lower2:
+      rcall turnoff
+      rjmp showlcd
+lower:
+      rcall turnoff
+      rjmp showlcd
+higher:
+      rcall ADC3
+      in temp3, ADCL
+      in temp4, ADCH
+      cbr temp4, (0 << 7) | (0 << 6) | (0 << 5) | (0 << 4) | (0 << 3) | (0 << 2)
+
+      cp temp2, temp4
+      breq equal3
+      brsh higher3
+      brlo lower3
+equal3:
+      cp temp1, temp3
+
+      brlo lower4
+      breq lower4
+      brsh higher4
+higher4:
+      rcall turnoff
+      rjmp showlcd
+lower4:
+      rcall turnon
+      rjmp showlcd
+lower3:
+      rcall turnon
+      rjmp showlcd
+higher3:
+      rcall turnoff
+      rjmp showlcd
+
+showlcd:
+
+      ldi argument_local, 0x9B
+      rcall SubtractWord
+      rcall Convert
+      rcall FindDigit
+
+      ldi temp2, '0'
+      add temp4, temp2
+      mov argument, temp4
+      rcall LCD_putchar
+
+      add result, temp2
+      mov argument, result
+      rcall LCD_putchar
+
+      rjmp  MainLoop
 
 ;====================================================================
 
