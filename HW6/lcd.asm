@@ -10,10 +10,10 @@
 
 ; Some notes on the hardware:
 ;ATmega8 (clock frequency doesn't matter, tested with 1 MHz to 8 MHz)
-; PORTC.1 -> LCD RS (register select)
-; PORTC.2 -> LCD RW (read/write)
-; PORTC.3 -> LCd E (Enable)
-; PORTC.4 ... PORTC.7 -> LCD data.4 ... data.7
+; porta.1 -> LCD RS (register select)
+; porta.2 -> LCD RW (read/write)
+; porta.3 -> LCd E (Enable)
+; porta.4 ... porta.7 -> LCD data.4 ... data.7
 ; the other LCd data lines can be left open or tied to ground.
 
 
@@ -25,147 +25,149 @@
 .def	argument= r17		;argument for calling subroutines
 .def	return	= r18		;return value from subroutines
 
-jmp reset
+rjmp reset
 
+reset:
 
+rjmp start;
 
 lcd_command8:	;used for init (we need some 8-bit commands to switch to 4-bit mode!)
-	in	temp, DDRC		;we need to set the high nibble of DDRC while leaving
+	in	temp, ddra		;we need to set the high nibble of ddra while leaving
 					;the other bits untouched. Using temp for that.
 	sbr	temp, 0b11110000	;set high nibble in temp
-	out	DDRC, temp		;write value to DDRC again
-	in	temp, PORTC		;then get the port value
+	out	ddra, temp		;write value to ddra again
+	in	temp, porta		;then get the port value
 	cbr	temp, 0b11110000	;and clear the data bits
 	cbr	argument, 0b00001111	;then clear the low nibble of the argument
 					;so that no control line bits are overwritten
 	or	temp, argument		;then set the data bits (from the argument) in the
 					;Port value
-	out	PORTC, temp		;and write the port value.
-	sbi	PORTC, LCD_E		;now strobe E
+	out	porta, temp		;and write the port value.
+	sbi	porta, LCD_E		;now strobe E
 	nop
 	nop
 	nop
-	cbi	PORTC, LCD_E
-	in	temp, DDRC		;get DDRC to make the data lines input again
+	cbi	porta, LCD_E
+	in	temp, ddra		;get ddra to make the data lines input again
 	cbr	temp, 0b11110000	;clear data line direction bits
-	out	DDRC, temp		;and write to DDRC
+	out	ddra, temp		;and write to ddra
 ret
 
 lcd_putchar:
 	push	argument		;save the argmuent (it's destroyed in between)
-	in	temp, DDRC		;get data direction bits
+	in	temp, ddra		;get data direction bits
 	sbr	temp, 0b11110000	;set the data lines to output
-	out	DDRC, temp		;write value to DDRC
-	in	temp, PORTC		;then get the data from PORTC
+	out	ddra, temp		;write value to ddra
+	in	temp, porta		;then get the data from porta
 	cbr	temp, 0b11111110	;clear ALL LCD lines (data and control!)
 	cbr	argument, 0b00001111	;we have to write the high nibble of our argument first
 					;so mask off the low nibble
 	or	temp, argument		;now set the argument bits in the Port value
-	out	PORTC, temp		;and write the port value
-	sbi	PORTC, LCD_RS		;now take RS high for LCD char data register access
-	sbi	PORTC, LCD_E		;strobe Enable
+	out	porta, temp		;and write the port value
+	sbi	porta, LCD_RS		;now take RS high for LCD char data register access
+	sbi	porta, LCD_E		;strobe Enable
 	nop
 	nop
 	nop
-	cbi	PORTC, LCD_E
+	cbi	porta, LCD_E
 	pop	argument		;restore the argument, we need the low nibble now...
 	cbr	temp, 0b11110000	;clear the data bits of our port value
 	swap	argument		;we want to write the LOW nibble of the argument to
 					;the LCD data lines, which are the HIGH port nibble!
 	cbr	argument, 0b00001111	;clear unused bits in argument
 	or	temp, argument		;and set the required argument bits in the port value
-	out	PORTC, temp		;write data to port
-	sbi	PORTC, LCD_RS		;again, set RS
-	sbi	PORTC, LCD_E		;strobe Enable
+	out	porta, temp		;write data to port
+	sbi	porta, LCD_RS		;again, set RS
+	sbi	porta, LCD_E		;strobe Enable
 	nop
 	nop
 	nop
-	cbi	PORTC, LCD_E
-	cbi	PORTC, LCD_RS
-	in	temp, DDRC
+	cbi	porta, LCD_E
+	cbi	porta, LCD_RS
+	in	temp, ddra
 	cbr	temp, 0b11110000	;data lines are input again
-	out	DDRC, temp
+	out	ddra, temp
 ret
 
 lcd_command:	;same as LCD_putchar, but with RS low!
 	push	argument
-	in	temp, DDRC
+	in	temp, ddra
 	sbr	temp, 0b11110000
-	out	DDRC, temp
-	in	temp, PORTC
+	out	ddra, temp
+	in	temp, porta
 	cbr	temp, 0b11111110
 	cbr	argument, 0b00001111
 	or	temp, argument
 
-	out	PORTC, temp
-	sbi	PORTC, LCD_E
+	out	porta, temp
+	sbi	porta, LCD_E
 	nop
 	nop
 	nop
-	cbi	PORTC, LCD_E
+	cbi	porta, LCD_E
 	pop	argument
 	cbr	temp, 0b11110000
 	swap	argument
 	cbr	argument, 0b00001111
 	or	temp, argument
-	out	PORTC, temp
-	sbi	PORTC, LCD_E
+	out	porta, temp
+	sbi	porta, LCD_E
 	nop
 	nop
 	nop
-	cbi	PORTC, LCD_E
-	in	temp, DDRC
+	cbi	porta, LCD_E
+	in	temp, ddra
 	cbr	temp, 0b11110000
-	out	DDRC, temp
+	out	ddra, temp
 ret
 
 LCD_getchar:
-	in	temp, DDRC		;make sure the data lines are inputs
+	in	temp, ddra		;make sure the data lines are inputs
 	andi	temp, 0b00001111	;so clear their DDR bits
-	out	DDRC, temp
-	sbi	PORTC, LCD_RS		;we want to access the char data register, so RS high
-	sbi	PORTC, LCD_RW		;we also want to read from the LCD -> RW high
-	sbi	PORTC, LCD_E		;while E is high
+	out	ddra, temp
+	sbi	porta, LCD_RS		;we want to access the char data register, so RS high
+	sbi	porta, LCD_RW		;we also want to read from the LCD -> RW high
+	sbi	porta, LCD_E		;while E is high
 	nop
-	in	temp, PINC		;we need to fetch the HIGH nibble
+	in	temp, pina		;we need to fetch the HIGH nibble
 	andi	temp, 0b11110000	;mask off the control line data
 	mov	return, temp		;and copy the HIGH nibble to return
-	cbi	PORTC, LCD_E		;now take E low again
+	cbi	porta, LCD_E		;now take E low again
 	nop				;wait a bit before strobing E again
 	nop
-	sbi	PORTC, LCD_E		;same as above, now we're reading the low nibble
+	sbi	porta, LCD_E		;same as above, now we're reading the low nibble
 	nop
-	in	temp, PINC		;get the data
+	in	temp, pina		;get the data
 	andi	temp, 0b11110000	;and again mask off the control line bits
 	swap	temp			;temp HIGH nibble contains data LOW nibble! so swap
 	or	return, temp		;and combine with previously read high nibble
-	cbi	PORTC, LCD_E		;take all control lines low again
-	cbi	PORTC, LCD_RS
-	cbi	PORTC, LCD_RW
+	cbi	porta, LCD_E		;take all control lines low again
+	cbi	porta, LCD_RS
+	cbi	porta, LCD_RW
 ret					;the character read from the LCD is now in return
 
 LCD_getaddr:	;works just like LCD_getchar, but with RS low, return.7 is the busy flag
-	in	temp, DDRC
+	in	temp, ddra
 	andi	temp, 0b00001111
-	out	DDRC, temp
-	cbi	PORTC, LCD_RS
-	sbi	PORTC, LCD_RW
-	sbi	PORTC, LCD_E
+	out	ddra, temp
+	cbi	porta, LCD_RS
+	sbi	porta, LCD_RW
+	sbi	porta, LCD_E
 	nop
-	in	temp, PINC
+	in	temp, pina
 	andi	temp, 0b11110000
 	mov	return, temp
-	cbi	PORTC, LCD_E
+	cbi	porta, LCD_E
 	nop
 	nop
-	sbi	PORTC, LCD_E
+	sbi	porta, LCD_E
 	nop
-	in	temp, PINC
+	in	temp, pina
 	andi	temp, 0b11110000
 	swap	temp
 	or	return, temp
-	cbi	PORTC, LCD_E
-	cbi	PORTC, LCD_RW
+	cbi	porta, LCD_E
+	cbi	porta, LCD_RW
 ret
 
 LCD_wait:				;read address and busy flag until busy flag cleared
@@ -189,7 +191,7 @@ ret
 LCD_init:
 
 	ldi	temp, 0b00001110	;control lines are output, rest is input
-	out	DDRC, temp
+	out	ddra, temp
 
 	rcall	LCD_delay		;first, we'll tell the LCD that we want to use it
 	ldi	argument, 0x20		;in 4-bit mode.
