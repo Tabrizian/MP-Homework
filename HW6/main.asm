@@ -143,7 +143,7 @@ RESET_VECTOR:
       ldi temp, (0<<RXCIE) | (0<<TXCIE) | (0<<UDRIE) | (1<<RXEN) | (1<<TXEN) | (0<<UCSZ2) | (0<<RXB8) | (1<<TXB8)
       out UCSRB, temp
 
-      ldi temp, (1<<URSEL) | (0<<UMSEL) | (1<<UPM1) | (0<<UPM0) | (1<<USBS) | (1<<UCSZ1) | (1<<UCSZ0) | (0<<UCPOL)
+      ldi temp, (1<<URSEL) | (0<<UMSEL) | (0<<UPM1) | (0<<UPM0) | (1<<USBS) | (1<<UCSZ1) | (1<<UCSZ0) | (0<<UCPOL)
       out UCSRC, temp
 
       ldi temp, 0x00
@@ -159,11 +159,36 @@ RESET_VECTOR:
 ;====================================================================
 ; CODE SEGMENT
 ;====================================================================
+toggle:
+      sbrc r22, 0
+      jmp set_0
+      jmp set_1
+
+set_0:
+      cbr r22, 0
+      ret
+set_1:
+      sbr r22, 0
+      ret
+parity_calculator:
+      push temp
+      ldi r23, 7
+
+parity_loop:
+      sbrc temp, 0
+      rcall toggle
+      lsr temp
+      dec r23
+      brne parity_loop
+
+      pop temp
+      ret
 transmit_data:
       sbis UCSRA,UDRE
       rjmp transmit_data
+      rcall parity_calculator
       cbi UCSRB,TXB8
-      sbrc r22,0
+      sbrc r22, 0
       sbi UCSRB,TXB8
       out UDR, temp
       ret
