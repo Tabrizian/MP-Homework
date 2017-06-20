@@ -71,22 +71,50 @@
 
 \begin{document}
 
-\maketitle
-\par All of the delay times are calculated with the clock frequncy of 1Mhz.
-The delay for writing to EEPROM is 1 ms. Which I used a 1000 loop in order to
-create this delay.
+\section{Question 1}
+They have different structures inherently that they can't be used interchangably.
+We explain some of the characteristics of Latches:
 
-And the delay for reading from EEPROM is in order of nano seconds which is
-lower than a single NOP. So I have used only one NOP.
+Latches have the following attributes and functionalities:
 
-Below are the timing tables for EEPROM 27c64 which I have used in order to
-use it as an EEPROM.
-
-\includegraphics[scale=0.6]{images/timing.png}
-
-\includegraphics[scale=0.6]{images/timing2.png}
-
-You can find the datasheet in the attached documents.
+\begin{enumerate}
+    \item
+        Outputs need to be consistent over a time period. So latches use \textbf{D-FF}
+        to implement this characteristic.
+    \item
+        In order to capture input and persist output latches need to use a control signal.
+\end{enumerate}
 
 
+Buffers have the following attributes and functionalities:
+
+
+\begin{enumerate}
+    \item
+        Buffers are used to guarantee the power of the signal and to further
+        amplification if required.
+
+    \item
+        They are used to make the output signal robust.
+
+\end{enumerate}
+
+As you can see they are different and have different use cases. So they
+can't be used interchangebly.
+
+\section{Question 2}
+In polling you keep checking for the event you want to occur. But in the
+interrupt mode you should only do the job you want when the event occurs you'll
+be informed about it and the program stops resuming and starts executing the
+interrupt routine. In this mode you don't have to constantly poll for the event
+to occur.
+
+
+
+\section{Question 3}
+Yes, you can. By first polling the device with more priority and then checking
+for the other you can apply priority to output devices.
+
+\section{Question 4}
+The only register that Atmega16 stores is the current address. It only stores PC.
 \end{document}
